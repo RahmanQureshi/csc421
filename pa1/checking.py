@@ -175,3 +175,4 @@ def print_gradients():
 
 if __name__ == "__main__":
     check_gradients()
+    print_gradients()
