@@ -173,14 +173,5 @@ def print_gradients():
     print('param_gradient.output_bias[3]', param_gradient.output_bias[3])
     
 
-
-
-
-
-    
-
-    
-    
-    
-
-    
+if __name__ == "__main__":
+    check_gradients()

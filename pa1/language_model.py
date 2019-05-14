@@ -181,8 +181,9 @@ class Model(object):
                 i.e. the (i, j) entry is 1 if the i'th word is j, and 0 otherwise."""
         
         ###########################   YOUR CODE HERE  ##############################
-
-
+        B = output_activations.shape[0]
+        V = output_activations.shape[1]
+        return output_activations - expanded_target_batch
         ############################################################################
 
 
@@ -251,8 +252,18 @@ class Model(object):
 
 
         ###########################   YOUR CODE HERE  ##############################
+        # Note: transposing at the end because these are gradients
 
+        output_bias_grad = np.sum(np.dot(loss_derivative, np.eye(activations.output_layer.shape[1])), axis=0).T
+        # Note: observe in compute_activations, activations.hidden_layer already has the activation fct applied.
+        hid_to_output_weights_grad = np.dot(activations.hidden_layer.T, loss_derivative).T
 
+        hid_bias_grad = np.sum(np.dot(hid_deriv, np.eye(activations.hidden_layer.shape[1])), axis=0).T
+        embed_to_hid_weights_grad = np.dot(activations.embedding_layer.T, hid_deriv).T
+
+        # Why sum bias gradients over the columns?
+        # The matrix computation gives [dL1/db1 ... dL1/dbN]
+        #                              [dLB/db1 ... dLB/dbN]
         ############################################################################
 
 
@@ -484,17 +495,3 @@ def train(embedding_dim, num_hid, config=DEFAULT_TRAINING_CONFIG):
     print('Final test cross-entropy: {:1.3f}'.format(test_CE))
 
     return model
-
-
-            
-            
-
-
-    
-
-    
-
-    
-
-
-    
