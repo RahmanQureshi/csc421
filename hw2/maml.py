@@ -43,9 +43,13 @@ def gd_step(cost, params, lrate):
     rate lrate. Returns a new set of parameters, and (IMPORTANT) does not modify
     the input parameters."""
     ### YOUR CODE HERE
+
+    # assumes first parameter of cost is params
+    gradient = ag.grad(cost)(params) # gradient of cost wrt params evaluated at params
     
-    pass
-    
+    # params - lrate * gradient(params)
+    # note: gradient is actually a dictionary
+    return {key: params[key] - np.multiply(lrate, value) for key, value in gradient.items()}
     ### END CODE
 
 
@@ -69,14 +73,21 @@ class MetaObjective:
         
     def __call__(self, params, return_traj=False):
         """Compute the meta-objective. If return_traj is True, you should return
-        a list of the parameters after each update. (This is used for visualization.)"""
+        a list of the parameters after each update. (This is used for visualization.)
+        
+        Recall: the meta objective is to minimize the inner objective
+                after num_steps gradient descent steps.
+        """
         trajectory = [params]
         
         ### YOUR CODE HERE
-
-        
+        inner_objective = InnerObjective(self.x, self.y) # aka the inner cost function
+        for i in range(0, self.num_steps):
+            new_params = gd_step(inner_objective, params, self.inner_lrate)
+            trajectory.append(new_params)
+            params = new_params
+        final_cost = inner_objective(params)
         ### END CODE
-        
         if return_traj:
             return final_cost, trajectory
         else:
@@ -89,9 +100,11 @@ class MetaObjective:
         px = np.linspace(XMIN, XMAX, 1000)
         for i, new_params in enumerate(trajectory):
             py = net_predict(new_params, px)
-            ax.plot(px, py, 'r-', alpha=(i+1)/len(trajectory))
+            ax.plot(px, py, 'r-', alpha=float(i+1)/float(len(trajectory)))
         ax.set_title(title)
-
+        plt.draw()
+        plt.show(block=False)
+        plt.pause(0.001)
 
 OUTER_LRATE = 0.01
 OUTER_STEPS = 12000
@@ -119,12 +132,10 @@ def train():
     fig, ax = plt.subplots(3, 4, figsize=(16, 9))
     plot_id = 0
     
-    x_val, y_val = data_gen.sample_dataset(NDATA)
-    
     for i in range(OUTER_STEPS):
         ### YOUR CODE HERE
-
-
+        x_val, y_val = data_gen.sample_dataset(NDATA)
+        params = gd_step(MetaObjective(x_val, y_val, INNER_LRATE, INNER_STEPS), params, OUTER_LRATE)
         ### END CODE
         
         if (i+1) % PRINT_EVERY == 0:
@@ -133,9 +144,10 @@ def train():
         
         #print('Outer cost:', cost(params))
         if (i+1) % DISPLAY_EVERY == 0:
-            cost.visualize(params, 'Iteration %d' % (i+1), ax.flat[plot_id])
+            val_cost.visualize(params, 'Iteration %d' % (i+1), ax.flat[plot_id])
             plot_id += 1
 
 
-
-
+if __name__ == "__main__":
+    train()
+    plt.show()
